@@ -21,6 +21,27 @@ const users = [
   },
 ];
 
+const userBullets = [
+  { size: 5, speed: 10, color: "yellow", limit: 5 },
+  { size: 5, speed: -10, color: "green", limit: 5 },
+];
+
+const bulletsForUserOne = [];
+const bulletsForUserTwo = [];
+const addBullet = (userNumber = 0) => {
+  const i = userNumber;
+  const direction = i ? -1 : 1;
+  const bullets = i ? bulletsForUserTwo : bulletsForUserOne;
+  if (bullets.length >= userBullets[i].limit) return;
+  bullets.push({
+    x: users[i].x + users[i].size * direction + userBullets[i].size * direction,
+    y: users[i].y,
+    size: userBullets[i].size,
+    speed: userBullets[i].speed,
+    color: userBullets[i].color,
+  });
+};
+
 const keys = {
   ArrowLeft: false,
   ArrowRight: false,
@@ -34,6 +55,8 @@ const keys = {
 
 document.addEventListener("keydown", (e) => {
   if (e.key in keys) keys[e.key] = true;
+  if (e.key === " ") addBullet();
+  if (e.key === "Enter") addBullet(1);
 });
 document.addEventListener("keyup", (e) => {
   if (e.key in keys) keys[e.key] = false;
@@ -65,6 +88,26 @@ const drawUsers = () => {
   });
 };
 
+const drawBullets = () => {
+  if (
+    bulletsForUserOne.length &&
+    bulletsForUserOne[0].x + bulletsForUserOne[0].size >= cWidth
+  )
+    bulletsForUserOne.shift();
+  if (
+    bulletsForUserTwo.length &&
+    bulletsForUserTwo[0].x - bulletsForUserTwo[0].size <= 0
+  )
+    bulletsForUserTwo.shift();
+  [...bulletsForUserOne, ...bulletsForUserTwo].forEach((bullet) => {
+    ctx.beginPath(bullet.x, bullet.y);
+    ctx.fillStyle = bullet.color;
+    ctx.arc((bullet.x += bullet.speed), bullet.y, bullet.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  });
+};
+
 const drawDelimiter = () => {
   ctx.beginPath(cWidth / 2, 0);
   ctx.moveTo(cWidth / 2, 0);
@@ -74,9 +117,10 @@ const drawDelimiter = () => {
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawDelimiter();
   moveUsers();
   drawUsers();
+  drawBullets();
+  drawDelimiter();
   window.requestAnimationFrame(draw);
 }
 draw();
