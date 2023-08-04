@@ -11,13 +11,21 @@ document.body.prepend(canvas);
 const ctx = canvas.getContext("2d");
 
 const users = [
-  { x: cWidth / 4, y: cHeight / 2, speed: 5, color: "red", size: 30 },
+  {
+    x: cWidth / 4,
+    y: cHeight / 2,
+    speed: 5,
+    color: "red",
+    size: 30,
+    damage: 0,
+  },
   {
     x: (cWidth / 4) * 3,
     y: cHeight / 2,
     speed: 5,
     color: "blue",
     size: 30,
+    damage: 0,
   },
 ];
 
@@ -94,11 +102,13 @@ const drawBullets = () => {
     bulletsForUserOne[0].x + bulletsForUserOne[0].size >= cWidth
   )
     bulletsForUserOne.shift();
+
   if (
     bulletsForUserTwo.length &&
     bulletsForUserTwo[0].x - bulletsForUserTwo[0].size <= 0
   )
     bulletsForUserTwo.shift();
+
   [...bulletsForUserOne, ...bulletsForUserTwo].forEach((bullet) => {
     ctx.beginPath(bullet.x, bullet.y);
     ctx.fillStyle = bullet.color;
@@ -106,6 +116,20 @@ const drawBullets = () => {
     ctx.fill();
     ctx.stroke();
   });
+
+  checkAndHandleHits(users[0], bulletsForUserTwo);
+  checkAndHandleHits(users[1], bulletsForUserOne);
+};
+
+const checkAndHandleHits = (user, bullets) => {
+  if (!bullets.length) return;
+  for (let i = 0; i < bullets.length; i++) {
+    const dX = Math.pow(bullets[i].x - user.x, 2);
+    const dY = Math.pow(bullets[i].y - user.y, 2);
+    if (Math.sqrt(dX + dY) > user.size + bullets[i].size) continue;
+    user.damage++;
+    bullets.splice(i, 1);
+  }
 };
 
 const drawDelimiter = () => {
