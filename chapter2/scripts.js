@@ -116,6 +116,7 @@ const togglePause = () => {
 const moveUsers = () => {
   aiMoveX();
   aiMoveY();
+  aiShoot();
 
   if (keys.a && users[0].x > users[0].size) users[0].x -= users[0].speed;
   if (keys.d && users[0].x < cWidth / 2 - users[0].size)
@@ -270,4 +271,15 @@ function aiMoveY() {
         )
       : triggerKeyDownEvent(aiMoveY.directionsY[index] ? "w" : "s");
   });
+}
+
+aiShoot.frames = 0;
+aiShoot.framesPerAction = 10;
+function aiShoot() {
+  aiShoot.frames++;
+  users.forEach((user, index) => {
+    if (!user.ai) return;
+    if (aiShoot.frames % aiShoot.framesPerAction === 0) addBullet(index);
+  });
+  if (aiShoot.frames % aiShoot.framesPerAction === 0) aiShoot.frames = 0;
 }
