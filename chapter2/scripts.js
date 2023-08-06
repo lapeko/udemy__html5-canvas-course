@@ -48,7 +48,7 @@ const createGame = () => {
   aiBtn2.style.color = "white";
   pause.innerHTML = "&nbsp;&nbsp;pause&nbsp;&nbsp;";
   pause.style.backgroundColor = "gray";
-  pauseMode = false;
+  if (pauseMode) togglePause();
 };
 createGame();
 
@@ -91,8 +91,8 @@ document.addEventListener("keydown", (e) => {
 document.addEventListener("keyup", (e) => {
   if (e.key in keys) keys[e.key] = false;
 });
-document.getElementById("restart").addEventListener("click", createGame);
 
+document.getElementById("restart").addEventListener("click", createGame);
 aiBtn1.addEventListener("click", (e) => toggleAI(0, e.target));
 aiBtn2.addEventListener("click", (e) => toggleAI(1, e.target));
 pause.addEventListener("click", () => togglePause());
