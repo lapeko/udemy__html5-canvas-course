@@ -1,3 +1,4 @@
+// TODO add a ball
 const canvas = document.createElement("canvas");
 
 canvas.width = 1000;
@@ -28,6 +29,7 @@ function draw() {
   clear();
   drawText();
   drawUsers();
+  checkCollision(); // TODO rewrite to work with a ball
 
   requestAnimationFrame(draw);
 }
@@ -61,4 +63,14 @@ function drawUsers() {
   if (keyboardActiveKeys.ArrowRight) userTwo.x += userTwo.speed;
   if (keyboardActiveKeys.ArrowUp) userTwo.y -= userTwo.speed;
   if (keyboardActiveKeys.ArrowDown) userTwo.y += userTwo.speed;
+}
+
+function checkCollision() {
+  if (
+    userOne.x <= userTwo.x + userTwo.width &&
+    userOne.x + userOne.width >= userTwo.x &&
+    userOne.y <= userTwo.y + userTwo.height &&
+    userOne.y + userOne.height >= userTwo.y
+  )
+    console.log("x");
 }
