@@ -1,4 +1,3 @@
-// TODO add circle mouse catching
 const settings = {
   bubbles: {
     count: 10,
@@ -10,6 +9,11 @@ const settings = {
     maxSpeedX: 5,
     minAngleSpeed: 1,
     maxAngleSpeed: 10,
+  },
+  bullet: {
+    size: 100,
+    color: "yellow",
+    decreaseSpeed: 3,
   },
   canvas: {
     width: 640,
@@ -41,29 +45,20 @@ canvas.style.backgroundColor = settings.canvas.background;
 const ctx = canvas.getContext("2d");
 
 const bubbles = [];
+const bullets = new Set();
 let score = 0;
 
 canvas.addEventListener("click", (event) => {
-  const { offsetX: eX, offsetY: eY } = event;
-  const index = bubbles.findIndex(
-    ({ x, y, size }) => Math.sqrt((x - eX) ** 2 + (y - eY) ** 2) <= size
-  );
-  if (index === -1) return;
-  const { maxSize, maxSpeedY, maxSpeedX } = settings.bubbles;
-  const { size, speedY, speedX } = bubbles[index];
-
-  const sizeScore = maxSize - size;
-  const speedYScore = Math.abs(maxSpeedY - speedY * 4);
-  const speedXScore = Math.abs(maxSpeedX - speedX * 8);
-
-  score += sizeScore + speedYScore + speedXScore;
-  bubbles[index] = createBubble();
+  const { offsetX, offsetY } = event;
+  createBullet(offsetX, offsetY);
 });
 
 function draw() {
   cleanCanvas();
   drawBubbles();
+  drawBullets();
   drawScore();
+  checkCollisions();
   requestAnimationFrame(draw);
 }
 draw();
@@ -88,12 +83,44 @@ function drawBubbles() {
   }
 }
 
+function drawBullets() {
+  const bulletsArr = Array.from(bullets);
+  bulletsArr.forEach((bullet) => {
+    bullet.size -= settings.bullet.decreaseSpeed;
+    if (bullet.size <= 0) bullets.delete(bullet);
+    else drawBullet(bullet);
+  });
+}
+
 function drawScore() {
   ctx.beginPath();
   ctx.fillStyle = "purple";
   ctx.font = "bold 24px monospace";
   ctx.textAlign = "center";
   ctx.fillText(`Score: ${score}`, canvas.width / 2, 30);
+}
+
+function checkCollisions() {
+  Array.from(bullets).forEach(({ x, y, size }) => {
+    const index = bubbles.findIndex(
+      (b) =>
+        b.x - b.size >= x - size &&
+        b.x + b.size <= x + size &&
+        b.y - b.size >= y - size &&
+        b.y + b.size <= y + size
+    );
+    if (index === -1) return;
+
+    const { minSize, maxSpeedY, maxSpeedX } = settings.bubbles;
+    const { size: bubbleSize, speedY, speedX } = bubbles[index];
+
+    const sizeScore = bubbleSize - minSize;
+    const speedYScore = Math.abs(maxSpeedY - speedY * 4);
+    const speedXScore = Math.abs(maxSpeedX - speedX * 8);
+
+    score += sizeScore + speedYScore + speedXScore;
+    bubbles[index] = createBubble();
+  });
 }
 
 function drawBubble({ x, y, size, r, g, b }) {
@@ -112,6 +139,13 @@ function drawBubble({ x, y, size, r, g, b }) {
   ctx.strokeStyle = `rgba(${r},${g},${b},0.9)`;
   ctx.arc(x, y, size, 0, Math.PI * 2);
   ctx.fill();
+  ctx.stroke();
+}
+
+function drawBullet({ x, y, size }) {
+  ctx.beginPath();
+  ctx.strokeStyle = settings.bullet.color;
+  ctx.arc(x, y, size, 0, Math.PI * 2);
   ctx.stroke();
 }
 
@@ -136,4 +170,8 @@ function createBubble() {
     Math.ceil(Math.random() * (maxAngleSpeed - minAngleSpeed)) + minAngleSpeed;
   const degree = Math.floor(Math.random() * 360);
   return { x, y, size, speedY, speedX, degree, angleSpeed, ...color };
+}
+
+function createBullet(x, y) {
+  bullets.add({ x, y, size: settings.bullet.size });
 }
