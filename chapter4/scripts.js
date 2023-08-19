@@ -1,8 +1,13 @@
 const settings = {
   bubbles: {
-    count: 30,
-    minSpeed: 5,
+    count: 10,
+    minSpeed: 1,
     maxSpeed: 10,
+  },
+  canvas: {
+    width: 640,
+    height: 480,
+    background: "black",
   },
 };
 
@@ -20,21 +25,32 @@ const canvas = document.createElement("canvas");
 
 document.body.appendChild(canvas);
 
-canvas.width = 640;
-canvas.height = 480;
-canvas.style.backgroundColor = "black";
+canvas.width = settings.canvas.width;
+canvas.height = settings.canvas.height;
+canvas.style.backgroundColor = settings.canvas.background;
 
 const ctx = canvas.getContext("2d");
 
 const bubbles = [];
+let score = 0;
 
-draw();
+canvas.addEventListener("click", (event) => {
+  const { offsetX: eX, offsetY: eY } = event;
+  const index = bubbles.findIndex(
+    ({ x, y, size }) => Math.sqrt((x - eX) ** 2 + (y - eY) ** 2) <= size
+  );
+  if (index === -1) return;
+  score++;
+  bubbles[index] = createBubble();
+});
 
 function draw() {
   cleanCanvas();
   drawBubbles();
+  drawScore();
   requestAnimationFrame(draw);
 }
+draw();
 
 function cleanCanvas() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -54,15 +70,12 @@ function drawBubbles() {
   }
 }
 
-function createBubble() {
-  const color = bubbleColors[Math.floor(Math.random() * bubbleColors.length)];
-  const size = Math.floor(Math.random() * 10) * 3 + 30;
-  const x = Math.floor(Math.random() * canvas.width);
-  const y = canvas.height + size;
-  const { minSpeed, maxSpeed } = settings.bubbles;
-  const speed =
-    Math.floor(Math.random() * (maxSpeed - minSpeed + 1)) + maxSpeed - minSpeed;
-  return { x, y, size, speed, ...color };
+function drawScore() {
+  ctx.beginPath();
+  ctx.fillStyle = "purple";
+  ctx.font = "bold 24px monospace";
+  ctx.textAlign = "center";
+  ctx.fillText(`Score: ${score}`, canvas.width / 2, 30);
 }
 
 function drawBubble({ x, y, size, r, g, b }) {
@@ -82,4 +95,15 @@ function drawBubble({ x, y, size, r, g, b }) {
   ctx.arc(x, y, size, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
+}
+
+function createBubble() {
+  const color = bubbleColors[Math.floor(Math.random() * bubbleColors.length)];
+  const size = Math.floor(Math.random() * 10) * 3 + 30;
+  const x = Math.floor(Math.random() * canvas.width);
+  const y = canvas.height + size;
+  const { minSpeed, maxSpeed } = settings.bubbles;
+  const speed =
+    Math.floor(Math.random() * (maxSpeed - minSpeed + 1)) + minSpeed;
+  return { x, y, size, speed, ...color };
 }
