@@ -4,6 +4,13 @@ const settings = {
     height: 768,
     backgroundColor: "black",
   },
+  player: {
+    width: 100,
+    height: 10,
+    bottom: 10,
+    color: "white",
+    speed: 10,
+  },
   bubbles: {
     count: 20,
     randomFramesToCreate: 5,
@@ -35,6 +42,10 @@ const bubbleColors = [
 const game = { pause: false, gameOver: false };
 const enemies = new Set();
 const bubbles = new Set();
+const player = {
+  x: settings.game.width / 2 - settings.player.width / 2,
+  y: settings.game.height - settings.player.height - settings.player.bottom,
+};
 const gameKeys = { a: false, d: false };
 
 const canvas = document.createElement("canvas");
@@ -49,6 +60,7 @@ const draw = () => {
   clean();
   drawBubbles();
   drawEnemies();
+  drawPlayer();
   requestAnimationFrame(draw);
 };
 draw();
@@ -88,6 +100,15 @@ function drawEnemies() {
       Math.abs(Math.sin((enemy.angle * Math.PI) / 180)) * 0.5 + 0.5;
     drawEnemy(enemy);
   });
+}
+
+function drawPlayer() {
+  const { color, speed, width, height } = settings.player;
+  if (gameKeys.a) player.x -= speed;
+  if (gameKeys.d) player.x += speed;
+  ctx.beginPath();
+  ctx.fillStyle = color;
+  ctx.fillRect(player.x, player.y, width, height);
 }
 
 function createBubble() {
