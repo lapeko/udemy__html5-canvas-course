@@ -5,11 +5,12 @@ const settings = {
     backgroundColor: "black",
   },
   bubbles: {
-    count: 8,
-    minSpeedY: 2,
-    maxSpeedY: 4,
-    minRadius: 20,
-    maxRadius: 40,
+    count: 20,
+    randomFramesToCreateBubble: 5,
+    minSpeedY: 1,
+    maxSpeedY: 10,
+    minRadius: 15,
+    maxRadius: 50,
   },
   enemies: {
     count: 2,
@@ -43,12 +44,10 @@ canvas.height = settings.game.height;
 canvas.style.backgroundColor = settings.game.backgroundColor;
 document.body.appendChild(canvas);
 
-createBubble();
-
 const draw = () => {
   clean();
   drawBubbles();
-  // requestAnimationFrame(draw);
+  requestAnimationFrame(draw);
 };
 draw();
 
@@ -57,20 +56,33 @@ function clean() {
 }
 
 function drawBubbles() {
-  console.log(bubbles);
+  if (
+    bubbles.size < settings.bubbles.count &&
+    Math.ceil(Math.random() * settings.bubbles.randomFramesToCreateBubble) ===
+      settings.bubbles.randomFramesToCreateBubble
+  )
+    createBubble();
   Array.from(bubbles).forEach((bubble) => {
-    drawBubble(bubble);
+    bubble.y += bubble.speed;
+    if (bubble.y - bubble.radius >= settings.game.height)
+      bubbles.delete(bubble);
+    else drawBubble(bubble);
   });
 }
 
 function createBubble() {
-  const radius =
-    Math.ceil(
-      Math.random() * (settings.bubbles.maxRadius - settings.bubbles.minRadius)
-    ) + settings.bubbles.minRadius;
+  const { maxRadius, minRadius, minSpeedY, maxSpeedY } = settings.bubbles;
+  const radius = Math.ceil(Math.random() * (maxRadius - minRadius)) + minRadius;
   const x =
-    Math.floor(Math.random() * settings.game.width - radius * 2) + radius;
-  const y = radius * 5; //TODO -radius;
+    Math.floor(Math.random() * (settings.game.width - radius * 2)) + radius;
+  const y = -radius;
+  const speed = Math.ceil(Math.random() * (maxSpeedY - minSpeedY)) + minSpeedY;
+  const rgb = bubbleColors[Math.floor(Math.random() * bubbleColors.length)];
+  bubbles.add({ x, y, radius, speed, ...rgb });
+}
+
+function drawBubble({ x, y, radius, r, g, b }) {
+  ctx.beginPath();
   const gradient = ctx.createRadialGradient(
     x - radius * 0.1,
     y - radius * 0.2,
@@ -79,18 +91,10 @@ function createBubble() {
     y,
     radius
   );
-  const { r, g, b } =
-    bubbleColors[Math.floor(Math.random() * bubbleColors.length)];
   gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.1)`);
   gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.5)`);
-  const strokeStyle = `rgba(${r}, ${g}, ${b}, 1)`;
-  bubbles.add({ x, y, radius, gradient, strokeStyle });
-}
-
-function drawBubble({ x, y, radius, gradient, strokeStyle }) {
-  ctx.beginPath();
   ctx.fillStyle = gradient;
-  ctx.strokeStyle = strokeStyle;
+  const strokeStyle = `rgba(${r}, ${g}, ${b}, 1)`;
   ctx.arc(x, y, radius, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
