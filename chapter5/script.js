@@ -68,7 +68,7 @@ const draw = () => {
   drawPlayer();
   checkCollisions();
   drawStatistics();
-  requestAnimationFrame(draw);
+  if (!game.pause) requestAnimationFrame(draw);
 };
 draw();
 
@@ -220,7 +220,10 @@ function drawEnemy({ x, y, colorIntensity }) {
 
 document.addEventListener("keydown", (e) => {
   if (Object.keys(gameKeys).includes(e.key)) gameKeys[e.key] = true;
-  if (e.key === " ") game.pause = !game.pause;
+  if (e.key !== " ") return;
+  if (!game.pause) return (game.pause = true);
+  game.pause = false;
+  draw();
 });
 
 document.addEventListener("keyup", (e) => {
