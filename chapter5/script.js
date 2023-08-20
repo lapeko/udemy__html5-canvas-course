@@ -40,18 +40,7 @@ const bubbleColors = [
   { r: 255, g: 255, b: 255 },
 ];
 
-const game = { pause: false, gameOver: false };
-const enemies = new Set();
-const bubbles = new Set();
-const player = {
-  x: settings.game.width / 2 - settings.player.width / 2,
-  y: settings.game.height - settings.player.height - settings.player.bottom,
-  width: settings.player.width,
-  height: settings.player.height,
-};
-let lives = settings.game.lives;
-let score = 0;
-const gameKeys = { a: false, d: false };
+let game, enemies, bubbles, player, lives, gameKeys;
 
 const canvas = document.createElement("canvas");
 const ctx = canvas.getContext("2d");
@@ -72,7 +61,23 @@ const draw = () => {
   if (game.pause) drawPause();
   if (!game.gameOver && !game.pause) requestAnimationFrame(draw);
 };
-draw();
+createGame();
+
+function createGame() {
+  game = { pause: false, gameOver: false };
+  enemies = new Set();
+  bubbles = new Set();
+  player = {
+    x: settings.game.width / 2 - settings.player.width / 2,
+    y: settings.game.height - settings.player.height - settings.player.bottom,
+    width: settings.player.width,
+    height: settings.player.height,
+  };
+  score = 0;
+  lives = settings.game.lives;
+  gameKeys = { a: false, d: false };
+  draw();
+}
 
 function clean() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -158,10 +163,13 @@ function drawGameOver() {
   ctx.font = "bold 36px monospace";
   ctx.fillText("Game over", width / 2, height / 2 - 36);
   ctx.fillText(`Your score: ${score}`, width / 2, height / 2);
-  ctx.fillRect(width / 2 - 72, height / 2 + 18, 144, 54);
+  const btnParams = [width / 2 - 72, height / 2 + 18, 144, 54];
+  ctx.fillRect(...btnParams);
   ctx.fillStyle = "black";
   ctx.font = "bold 24px monospace";
   ctx.fillText("Restart", width / 2, height / 2 + 54);
+  const btnClickHandler = createRestartBtnClickHandler(btnParams);
+  document.addEventListener("click", btnClickHandler);
 }
 
 function drawPause() {
@@ -284,3 +292,20 @@ function checkCollisionBetweenCircleAndRect(
 
   return distance < settings.enemies.radius;
 }
+
+const createRestartBtnClickHandler = ([x, y, width, height]) => {
+  const handler = (event) => {
+    const { offsetX, offsetY } = event;
+    if (
+      offsetX < x ||
+      offsetX > x + width ||
+      offsetY < y ||
+      offsetY > y + height
+    )
+      return;
+    console.log("====>");
+    document.removeEventListener("click", handler);
+    createGame();
+  };
+  return handler;
+};
