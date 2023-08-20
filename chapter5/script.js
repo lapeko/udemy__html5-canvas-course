@@ -168,8 +168,7 @@ function drawGameOver() {
   ctx.fillStyle = "black";
   ctx.font = "bold 24px monospace";
   ctx.fillText("Restart", width / 2, height / 2 + 54);
-  const btnClickHandler = createRestartBtnClickHandler(btnParams);
-  document.addEventListener("click", btnClickHandler);
+  createRestartBtnEventHandlers(btnParams);
 }
 
 function drawPause() {
@@ -293,8 +292,16 @@ function checkCollisionBetweenCircleAndRect(
   return distance < settings.enemies.radius;
 }
 
-const createRestartBtnClickHandler = ([x, y, width, height]) => {
-  const handler = (event) => {
+const createRestartBtnEventHandlers = ([x, y, width, height]) => {
+  const mouseMoveHandler = (event) => {
+    const { offsetX, offsetY } = event;
+
+    const outsideBtn =
+      offsetX < x || offsetX > x + width || offsetY < y || offsetY > y + height;
+
+    document.body.style.cursor = outsideBtn ? "auto" : "pointer";
+  };
+  const clickHandler = (event) => {
     const { offsetX, offsetY } = event;
     if (
       offsetX < x ||
@@ -303,9 +310,11 @@ const createRestartBtnClickHandler = ([x, y, width, height]) => {
       offsetY > y + height
     )
       return;
-    console.log("====>");
-    document.removeEventListener("click", handler);
+    document.removeEventListener("click", clickHandler);
+    document.removeEventListener("mousemove", mouseMoveHandler);
+    document.body.style.cursor = "auto";
     createGame();
   };
-  return handler;
+  document.addEventListener("click", clickHandler);
+  document.addEventListener("mousemove", mouseMoveHandler);
 };
