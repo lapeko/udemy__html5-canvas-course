@@ -250,7 +250,7 @@ function drawEnemy({ x, y, colorIntensity }) {
 }
 
 document.addEventListener("keydown", (e) => {
-  if (Object.keys(gameKeys).includes(e.key)) gameKeys[e.key] = true;
+  if (e.key in gameKeys) return (gameKeys[e.key] = true);
   if (e.key !== " ") return;
   if (!game.pause) return (game.pause = true);
   game.pause = false;
@@ -258,7 +258,7 @@ document.addEventListener("keydown", (e) => {
 });
 
 document.addEventListener("keyup", (e) => {
-  if (Object.keys(gameKeys).includes(e.key)) gameKeys[e.key] = false;
+  if (e.key in gameKeys) gameKeys[e.key] = false;
 });
 
 function checkCollisionBetweenCircleAndRect(
