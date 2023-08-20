@@ -68,7 +68,9 @@ const draw = () => {
   drawPlayer();
   checkCollisions();
   drawStatistics();
-  if (!game.pause) requestAnimationFrame(draw);
+  if (game.gameOver) drawGameOver();
+  if (game.pause) drawPause();
+  if (!game.gameOver && !game.pause) requestAnimationFrame(draw);
 };
 draw();
 
@@ -126,7 +128,7 @@ function checkCollisions() {
     if (!checkCollisionBetweenCircleAndRect(e.x, e.y, radius, x, y, w, h))
       return;
     enemies.delete(e);
-    lives--;
+    if (!--lives) game.gameOver = true;
   });
   Array.from(bubbles).forEach((b) => {
     const { x, y, width: w, height: h } = player;
@@ -146,6 +148,28 @@ function drawStatistics() {
   ctx.fillText(`lives: ${lives}`, 50, 50);
   ctx.textAlign = "right";
   ctx.fillText(`score: ${score}`, width - 50, 50);
+}
+
+function drawGameOver() {
+  const { width, height } = settings.game;
+  clean();
+  ctx.beginPath();
+  ctx.textAlign = "center";
+  ctx.font = "bold 36px monospace";
+  ctx.fillText("Game over", width / 2, height / 2 - 36);
+  ctx.fillText(`Your score: ${score}`, width / 2, height / 2);
+  ctx.fillRect(width / 2 - 72, height / 2 + 18, 144, 54);
+  ctx.fillStyle = "black";
+  ctx.font = "bold 24px monospace";
+  ctx.fillText("Restart", width / 2, height / 2 + 54);
+}
+
+function drawPause() {
+  const { width, height } = settings.game;
+  ctx.beginPath();
+  ctx.textAlign = "center";
+  ctx.font = "bold 36px monospace";
+  ctx.fillText("Pause", width / 2, height / 2);
 }
 
 function createBubble() {
@@ -230,7 +254,7 @@ document.addEventListener("keyup", (e) => {
   if (Object.keys(gameKeys).includes(e.key)) gameKeys[e.key] = false;
 });
 
-const checkCollisionBetweenCircleAndRect = (
+function checkCollisionBetweenCircleAndRect(
   x1,
   y1,
   radius,
@@ -238,7 +262,7 @@ const checkCollisionBetweenCircleAndRect = (
   y2,
   width,
   height
-) => {
+) {
   if (x1 + radius < x2) return false;
   if (x1 - radius > x2 + width) return false;
   if (y1 + radius < y2) return false;
@@ -259,4 +283,4 @@ const checkCollisionBetweenCircleAndRect = (
   );
 
   return distance < settings.enemies.radius;
-};
+}
