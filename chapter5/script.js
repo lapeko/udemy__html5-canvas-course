@@ -24,7 +24,7 @@ const settings = {
     count: 10,
     randomFramesToCreate: 15,
     minSpeedY: 5,
-    maxSpeedY: 20,
+    maxSpeedY: 15,
     radius: 20,
     colorChangeSpeed: 5,
   },
@@ -49,6 +49,8 @@ const player = {
   width: settings.player.width,
   height: settings.player.height,
 };
+let lives = settings.game.lives;
+let score = 0;
 const gameKeys = { a: false, d: false };
 
 const canvas = document.createElement("canvas");
@@ -65,6 +67,7 @@ const draw = () => {
   drawEnemies();
   drawPlayer();
   checkCollisions();
+  drawStatistics();
   requestAnimationFrame(draw);
 };
 draw();
@@ -123,8 +126,26 @@ function checkCollisions() {
     if (!checkCollisionBetweenCircleAndRect(e.x, e.y, radius, x, y, w, h))
       return;
     enemies.delete(e);
-    console.log("hit");
+    lives--;
   });
+  Array.from(bubbles).forEach((b) => {
+    const { x, y, width: w, height: h } = player;
+    if (!checkCollisionBetweenCircleAndRect(b.x, b.y, b.radius, x, y, w, h))
+      return;
+    bubbles.delete(b);
+    score += b.radius;
+  });
+}
+
+function drawStatistics() {
+  const { width } = settings.game;
+  ctx.beginPath();
+  ctx.fillStyle = "white";
+  ctx.font = "bold 24px monospace";
+  ctx.textAlign = "left";
+  ctx.fillText(`lives: ${lives}`, 50, 50);
+  ctx.textAlign = "right";
+  ctx.fillText(`score: ${score}`, width - 50, 50);
 }
 
 function createBubble() {
