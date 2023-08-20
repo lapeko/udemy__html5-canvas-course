@@ -1,15 +1,16 @@
 const settings = {
   game: {
+    lives: 3,
     width: 1024,
     height: 768,
     backgroundColor: "black",
   },
   player: {
-    width: 100,
+    width: 120,
     height: 10,
     bottom: 10,
     color: "white",
-    speed: 10,
+    speed: 20,
   },
   bubbles: {
     count: 20,
@@ -20,10 +21,10 @@ const settings = {
     maxRadius: 30,
   },
   enemies: {
-    count: 5,
-    randomFramesToCreate: 50,
+    count: 10,
+    randomFramesToCreate: 15,
     minSpeedY: 5,
-    maxSpeedY: 15,
+    maxSpeedY: 20,
     radius: 20,
     colorChangeSpeed: 5,
   },
@@ -45,6 +46,8 @@ const bubbles = new Set();
 const player = {
   x: settings.game.width / 2 - settings.player.width / 2,
   y: settings.game.height - settings.player.height - settings.player.bottom,
+  width: settings.player.width,
+  height: settings.player.height,
 };
 const gameKeys = { a: false, d: false };
 
@@ -61,6 +64,7 @@ const draw = () => {
   drawBubbles();
   drawEnemies();
   drawPlayer();
+  checkCollisions();
   requestAnimationFrame(draw);
 };
 draw();
@@ -103,12 +107,24 @@ function drawEnemies() {
 }
 
 function drawPlayer() {
-  const { color, speed, width, height } = settings.player;
-  if (gameKeys.a) player.x -= speed;
-  if (gameKeys.d) player.x += speed;
+  const { color, speed } = settings.player;
+  if (gameKeys.a && player.x > 0) player.x -= speed;
+  if (gameKeys.d && player.x + player.width < settings.game.width)
+    player.x += speed;
   ctx.beginPath();
   ctx.fillStyle = color;
-  ctx.fillRect(player.x, player.y, width, height);
+  ctx.fillRect(player.x, player.y, player.width, player.height);
+}
+
+function checkCollisions() {
+  const { x, y, width: w, height: h } = player;
+  const { radius } = settings.enemies;
+  Array.from(enemies).forEach((e) => {
+    if (!checkCollisionBetweenCircleAndRect(e.x, e.y, radius, x, y, w, h))
+      return;
+    enemies.delete(e);
+    console.log("hit");
+  });
 }
 
 function createBubble() {
@@ -189,3 +205,34 @@ document.addEventListener("keydown", (e) => {
 document.addEventListener("keyup", (e) => {
   if (Object.keys(gameKeys).includes(e.key)) gameKeys[e.key] = false;
 });
+
+const checkCollisionBetweenCircleAndRect = (
+  x1,
+  y1,
+  radius,
+  x2,
+  y2,
+  width,
+  height
+) => {
+  if (x1 + radius < x2) return false;
+  if (x1 - radius > x2 + width) return false;
+  if (y1 + radius < y2) return false;
+  if (y1 - radius > y2 + height) return false;
+
+  const nearestRectDot = {};
+
+  if (x1 < x2) nearestRectDot.x = x2;
+  else if (x1 > x2 + width) nearestRectDot.x = x2 + width;
+  else nearestRectDot.x = x1;
+
+  if (y1 < y2) nearestRectDot.y = y2;
+  else if (y1 > y2 + height) nearestRectDot.y = y2 + height;
+  else nearestRectDot.y = y1;
+
+  const distance = Math.sqrt(
+    (x1 - nearestRectDot.x) ** 2 + (y1 - nearestRectDot.y) ** 2
+  );
+
+  return distance < settings.enemies.radius;
+};
