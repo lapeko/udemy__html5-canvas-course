@@ -6,18 +6,19 @@ const settings = {
   },
   bubbles: {
     count: 20,
-    randomFramesToCreateBubble: 5,
+    randomFramesToCreate: 5,
     minSpeedY: 1,
     maxSpeedY: 10,
-    minRadius: 15,
-    maxRadius: 50,
+    minRadius: 10,
+    maxRadius: 30,
   },
   enemies: {
-    count: 2,
-    minSpeedY: 2,
-    maxSpeedY: 4,
-    minRadius: 20,
-    maxRadius: 40,
+    count: 5,
+    randomFramesToCreate: 50,
+    minSpeedY: 5,
+    maxSpeedY: 15,
+    radius: 20,
+    colorChangeSpeed: 5,
   },
 };
 
@@ -47,6 +48,7 @@ document.body.appendChild(canvas);
 const draw = () => {
   clean();
   drawBubbles();
+  drawEnemies();
   requestAnimationFrame(draw);
 };
 draw();
@@ -58,8 +60,8 @@ function clean() {
 function drawBubbles() {
   if (
     bubbles.size < settings.bubbles.count &&
-    Math.ceil(Math.random() * settings.bubbles.randomFramesToCreateBubble) ===
-      settings.bubbles.randomFramesToCreateBubble
+    Math.ceil(Math.random() * settings.bubbles.randomFramesToCreate) ===
+      settings.bubbles.randomFramesToCreate
   )
     createBubble();
   Array.from(bubbles).forEach((bubble) => {
@@ -67,6 +69,24 @@ function drawBubbles() {
     if (bubble.y - bubble.radius >= settings.game.height)
       bubbles.delete(bubble);
     else drawBubble(bubble);
+  });
+}
+
+function drawEnemies() {
+  if (
+    enemies.size < settings.enemies.count &&
+    Math.ceil(Math.random() * settings.enemies.randomFramesToCreate) ===
+      settings.enemies.randomFramesToCreate
+  )
+    createEnemy();
+  Array.from(enemies).forEach((enemy) => {
+    if (enemy.y - settings.enemies.radius >= settings.game.height)
+      return enemies.delete(enemy);
+    enemy.y += enemy.speed;
+    enemy.angle += settings.enemies.colorChangeSpeed % 360;
+    enemy.colorIntensity =
+      Math.abs(Math.sin((enemy.angle * Math.PI) / 180)) * 0.5 + 0.5;
+    drawEnemy(enemy);
   });
 }
 
@@ -79,6 +99,14 @@ function createBubble() {
   const speed = Math.ceil(Math.random() * (maxSpeedY - minSpeedY)) + minSpeedY;
   const rgb = bubbleColors[Math.floor(Math.random() * bubbleColors.length)];
   bubbles.add({ x, y, radius, speed, ...rgb });
+}
+
+function createEnemy() {
+  const { radius, minSpeedY, maxSpeedY } = settings.enemies;
+  const x = Math.floor(Math.random() * (settings.game.width - radius)) + radius;
+  const y = -radius;
+  const speed = Math.ceil(Math.random() * (maxSpeedY - minSpeedY)) + minSpeedY;
+  enemies.add({ x, y, colorIntensity: 1, speed, angle: 0 });
 }
 
 function drawBubble({ x, y, radius, r, g, b }) {
@@ -94,7 +122,39 @@ function drawBubble({ x, y, radius, r, g, b }) {
   gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.1)`);
   gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.5)`);
   ctx.fillStyle = gradient;
-  const strokeStyle = `rgba(${r}, ${g}, ${b}, 1)`;
+  ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 1)`;
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+}
+
+function drawEnemy({ x, y, colorIntensity }) {
+  ctx.beginPath();
+  const radius = settings.enemies.radius;
+  const gradient = ctx.createRadialGradient(
+    x - radius * 0.1,
+    y - radius * 0.2,
+    0,
+    x,
+    y,
+    radius
+  );
+  gradient.addColorStop(
+    0,
+    `rgb(${255 * colorIntensity}, ${127 * colorIntensity}, ${
+      127 * colorIntensity
+    })`
+  );
+  gradient.addColorStop(
+    1,
+    `rgb(${127 * colorIntensity}, ${31 * colorIntensity}, ${
+      31 * colorIntensity
+    })`
+  );
+  ctx.fillStyle = gradient;
+  ctx.strokeStyle = `rgb(${191 * colorIntensity}, ${63 * colorIntensity}, ${
+    63 * colorIntensity
+  })`;
   ctx.arc(x, y, radius, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
