@@ -21,7 +21,7 @@ const settings = {
     height: 20,
     bottom: 20,
     color: "white",
-    speed: 10,
+    speed: 30,
   },
 };
 
@@ -83,4 +83,11 @@ document.addEventListener("keydown", (e) => {
 });
 document.addEventListener("keyup", (e) => {
   if (e.key in keyboard) keyboard[e.key] = false;
+});
+canvas.addEventListener("mousemove", (e) => {
+  const x = e.offsetX;
+  if (x < user.width / 2) user.x = 0;
+  else if (x > settings.game.width - user.width / 2)
+    user.x = settings.game.width - user.width;
+  else user.x = x - user.width / 2;
 });
