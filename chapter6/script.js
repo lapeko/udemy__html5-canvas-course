@@ -1,4 +1,3 @@
-// init canvas
 // add user
 // add keyboard movement for user
 // add mouse movement for user
@@ -13,3 +12,17 @@
 // add pause, game over and restart game
 // add bonuses
 // add inc and dec ball speed
+
+const settings = {};
+
+const canvas = document.createElement("canvas");
+const ctx = canvas.getContext("2d");
+
+canvas.width = 1024;
+canvas.height = 648;
+canvas.style.backgroundColor = "black";
+
+document.body.appendChild(canvas);
+
+const draw = () => {};
+draw();
