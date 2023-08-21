@@ -1,5 +1,3 @@
-// add mouse movement for user
-// add a ball
 // add ball movement
 // add collision calculation
 // add bricks
@@ -23,6 +21,13 @@ const settings = {
     color: "white",
     speed: 30,
   },
+  ball: {
+    color: "yellow",
+    radius: 15,
+    lowSpeed: 10,
+    normalSpeed: 20,
+    highSpeed: 30,
+  },
 };
 
 const canvas = document.createElement("canvas");
@@ -34,13 +39,14 @@ canvas.style.backgroundColor = "black";
 
 document.body.appendChild(canvas);
 
-let user, keyboard;
+let user, keyboard, ball;
 
 createGame();
 
 const draw = () => {
   clean();
   drawUser();
+  drawBall();
   requestAnimationFrame(draw);
 };
 draw();
@@ -63,19 +69,57 @@ function drawUser() {
   ctx.stroke();
 }
 
+function drawBall() {
+  const { attached, color, radius } = ball;
+  if (attached) {
+    ball.x = user.x + user.width / 2;
+    ball.y = user.y - radius - user.height / 2;
+  }
+  const { x, y } = ball;
+  ctx.beginPath();
+  ctx.fillStyle = color;
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fill();
+}
+
 function createGame() {
   const {
     game: { width, height },
-    user: { width: uWidth, height: uHeight, bottom, color },
+    user: { width: uWidth, height: uHeight, bottom: uBottom, color: uColor },
+    ball: {
+      radius: bRadius,
+      color: bColor,
+      lowSpeed: bLowSpeed,
+      normalSpeed: bNormalSpeed,
+      highSpeed: bHighSpeed,
+    },
   } = settings;
   user = {
     x: width / 2 - uWidth / 2,
-    y: height - bottom - uHeight / 2,
+    y: height - uBottom - uHeight / 2,
     width: uWidth,
     height: uHeight,
-    color,
+    color: uColor,
   };
-  keyboard = { a: false, d: false, " ": false, Escape: false };
+  keyboard = {
+    a: false,
+    s: false,
+    d: false,
+    w: false,
+    " ": false,
+    Escape: false,
+  };
+  ball = {
+    x: width / 2,
+    y: height - uBottom - uHeight - bRadius,
+    color: bColor,
+    speed: 0,
+    attached: true,
+    lowSpeed: bLowSpeed,
+    normalSpeed: bNormalSpeed,
+    highSpeed: bHighSpeed,
+    radius: bRadius,
+  };
 }
 
 document.addEventListener("keydown", (e) => {
