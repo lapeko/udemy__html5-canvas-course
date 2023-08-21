@@ -1,4 +1,3 @@
-// add keyboard movement for user
 // add mouse movement for user
 // add a ball
 // add ball movement
@@ -22,6 +21,7 @@ const settings = {
     height: 20,
     bottom: 20,
     color: "white",
+    speed: 10,
   },
 };
 
@@ -34,12 +34,14 @@ canvas.style.backgroundColor = "black";
 
 document.body.appendChild(canvas);
 
-let user;
+let user, keyboard;
 
 createGame();
 
 const draw = () => {
+  clean();
   drawUser();
+  requestAnimationFrame(draw);
 };
 draw();
 
@@ -48,6 +50,9 @@ function clean() {
 }
 
 function drawUser() {
+  if (keyboard.a && user.x > 0) user.x -= settings.user.speed;
+  if (keyboard.d && user.x + user.width < settings.game.width)
+    user.x += settings.user.speed;
   const { color, x, y, width, height } = user;
   ctx.beginPath();
   ctx.strokeStyle = color;
@@ -70,4 +75,12 @@ function createGame() {
     height: uHeight,
     color,
   };
+  keyboard = { a: false, d: false, " ": false, Escape: false };
 }
+
+document.addEventListener("keydown", (e) => {
+  if (e.key in keyboard) keyboard[e.key] = true;
+});
+document.addEventListener("keyup", (e) => {
+  if (e.key in keyboard) keyboard[e.key] = false;
+});
