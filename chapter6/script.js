@@ -1,5 +1,3 @@
-// add ball movement
-// add collision calculation
 // add bricks
 // add brick colors
 // add brick hit logic (collision + removing + change directions of ball)
@@ -13,6 +11,7 @@ const settings = {
   game: {
     width: 1024,
     height: 768,
+    lives: 3,
   },
   user: {
     width: 200,
@@ -24,9 +23,9 @@ const settings = {
   ball: {
     color: "yellow",
     radius: 15,
-    lowSpeed: 10,
-    normalSpeed: 20,
-    highSpeed: 30,
+    lowSpeed: 5,
+    normalSpeed: 10,
+    highSpeed: 15,
   },
 };
 
@@ -39,7 +38,7 @@ canvas.style.backgroundColor = "black";
 
 document.body.appendChild(canvas);
 
-let user, keyboard, ball;
+let user, keyboard, ball, lives;
 
 createGame();
 
@@ -47,6 +46,7 @@ const draw = () => {
   clean();
   drawUser();
   drawBall();
+  handleCollisions();
   requestAnimationFrame(draw);
 };
 draw();
@@ -61,19 +61,18 @@ function drawUser() {
     user.x += settings.user.speed;
   const { color, x, y, width, height } = user;
   ctx.beginPath();
-  ctx.strokeStyle = color;
-  ctx.lineWidth = height;
-  ctx.lineCap = "round";
-  ctx.moveTo(x, y);
-  ctx.lineTo(x + width, y);
-  ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, width, height);
 }
 
 function drawBall() {
   const { attached, color, radius } = ball;
   if (attached) {
     ball.x = user.x + user.width / 2;
-    ball.y = user.y - radius - user.height / 2;
+    ball.y = user.y - radius;
+  } else {
+    ball.x += Math.sin((ball.angle * Math.PI) / 180) * ball.speed;
+    ball.y += Math.cos((ball.angle * Math.PI) / 180) * -ball.speed;
   }
   const { x, y } = ball;
   ctx.beginPath();
@@ -82,9 +81,35 @@ function drawBall() {
   ctx.fill();
 }
 
+function handleCollisions() {
+  const {
+    game: { height: gHeight },
+    user: { bottom: uBottom, height: uHeight },
+  } = settings;
+  if (ball.attached) return;
+  if (ball.x - ball.radius <= 0 || ball.x + ball.radius >= settings.game.width)
+    ball.angle *= -1;
+  else if (ball.y - ball.radius <= 0) ball.angle = 180 - ball.angle;
+  else if (
+    ball.y + ball.radius >= gHeight - uBottom - uHeight &&
+    ball.y <= gHeight - uBottom - uHeight / 2 &&
+    ball.x + ball.radius >= user.x &&
+    ball.x - ball.radius <= user.x + user.width
+  ) {
+    const width = user.width + ball.radius * 2;
+    const userCenterX = user.x + user.width / 2;
+    const dx = ball.x - userCenterX;
+    ball.angle = ((dx * 2) / width) * 45;
+  } else if (ball.y - ball.radius >= gHeight) {
+    lives--;
+    console.log(lives);
+    ball.attached = true;
+  }
+}
+
 function createGame() {
   const {
-    game: { width, height },
+    game: { width, height, lives: gLives },
     user: { width: uWidth, height: uHeight, bottom: uBottom, color: uColor },
     ball: {
       radius: bRadius,
@@ -94,9 +119,10 @@ function createGame() {
       highSpeed: bHighSpeed,
     },
   } = settings;
+  lives = gLives;
   user = {
     x: width / 2 - uWidth / 2,
-    y: height - uBottom - uHeight / 2,
+    y: height - uBottom - uHeight,
     width: uWidth,
     height: uHeight,
     color: uColor,
@@ -114,6 +140,7 @@ function createGame() {
     y: height - uBottom - uHeight - bRadius,
     color: bColor,
     speed: 0,
+    angle: 0,
     attached: true,
     lowSpeed: bLowSpeed,
     normalSpeed: bNormalSpeed,
@@ -123,7 +150,13 @@ function createGame() {
 }
 
 document.addEventListener("keydown", (e) => {
-  if (e.key in keyboard) keyboard[e.key] = true;
+  if (e.key in keyboard) {
+    keyboard[e.key] = true;
+    if (e.key === " " && ball.attached) {
+      ball.attached = false;
+      ball.speed = settings.ball.normalSpeed;
+    }
+  }
 });
 document.addEventListener("keyup", (e) => {
   if (e.key in keyboard) keyboard[e.key] = false;
@@ -134,4 +167,9 @@ canvas.addEventListener("mousemove", (e) => {
   else if (x > settings.game.width - user.width / 2)
     user.x = settings.game.width - user.width;
   else user.x = x - user.width / 2;
+});
+canvas.addEventListener("click", () => {
+  if (!ball.attached) return;
+  ball.attached = false;
+  ball.speed = settings.ball.normalSpeed;
 });
