@@ -27,6 +27,12 @@ const settings = {
     normalSpeed: 10,
     highSpeed: 15,
   },
+  bricks: {
+    columns: 8,
+    rows: 3,
+    height: 50,
+    gap: 10,
+  },
 };
 
 const canvas = document.createElement("canvas");
@@ -38,7 +44,7 @@ canvas.style.backgroundColor = "black";
 
 document.body.appendChild(canvas);
 
-let user, keyboard, ball, lives;
+let user, keyboard, ball, lives, bricks;
 
 createGame();
 
@@ -46,6 +52,7 @@ const draw = () => {
   clean();
   drawUser();
   drawBall();
+  drawBricks();
   handleCollisions();
   requestAnimationFrame(draw);
 };
@@ -79,6 +86,17 @@ function drawBall() {
   ctx.fillStyle = color;
   ctx.arc(x, y, radius, 0, Math.PI * 2);
   ctx.fill();
+}
+
+function drawBricks() {
+  bricks.forEach((row) =>
+    row.forEach((brick) => {
+      const { x, y, width, height } = brick;
+      ctx.beginPath();
+      ctx.fillStyle = "white";
+      ctx.fillRect(x, y, width, height);
+    })
+  );
 }
 
 function handleCollisions() {
@@ -118,6 +136,12 @@ function createGame() {
       normalSpeed: bNormalSpeed,
       highSpeed: bHighSpeed,
     },
+    bricks: {
+      rows: brickRows,
+      columns: brickColumns,
+      gap: brickGap,
+      height: brickHeight,
+    },
   } = settings;
   lives = gLives;
   user = {
@@ -147,6 +171,15 @@ function createGame() {
     highSpeed: bHighSpeed,
     radius: bRadius,
   };
+  const brickWidth = (width - (brickColumns + 1) * brickGap) / brickColumns;
+  bricks = new Array(brickRows).fill(null).map((_, rowIndex) =>
+    new Array(brickColumns).fill(null).map((_, columnIndex) => ({
+      x: (brickWidth + brickGap) * columnIndex + brickGap,
+      y: (brickHeight + brickGap) * rowIndex + brickGap,
+      width: brickWidth,
+      height: brickHeight,
+    }))
+  );
 }
 
 document.addEventListener("keydown", (e) => {
