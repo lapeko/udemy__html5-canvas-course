@@ -91,9 +91,9 @@ function drawBall() {
 function drawBricks() {
   bricks.forEach((row) =>
     row.forEach((brick) => {
-      const { x, y, width, height } = brick;
+      const { x, y, width, height, color } = brick;
       ctx.beginPath();
-      ctx.fillStyle = "white";
+      ctx.fillStyle = color;
       ctx.fillRect(x, y, width, height);
     })
   );
@@ -178,6 +178,7 @@ function createGame() {
       y: (brickHeight + brickGap) * rowIndex + brickGap,
       width: brickWidth,
       height: brickHeight,
+      color: "#" + Math.random().toString(16).substring(2, 8),
     }))
   );
 }
