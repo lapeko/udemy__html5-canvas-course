@@ -1,5 +1,3 @@
-// add bricks
-// add brick colors
 // add brick hit logic (collision + removing + change directions of ball)
 // add score logic (you can add random * 50 to every brick)
 // draw lives and score
@@ -105,9 +103,12 @@ function handleCollisions() {
     user: { bottom: uBottom, height: uHeight },
   } = settings;
   if (ball.attached) return;
+  // left and right walls
   if (ball.x - ball.radius <= 0 || ball.x + ball.radius >= settings.game.width)
     ball.angle *= -1;
+  // top wall
   else if (ball.y - ball.radius <= 0) ball.angle = 180 - ball.angle;
+  // user
   else if (
     ball.y + ball.radius >= gHeight - uBottom - uHeight &&
     ball.y <= gHeight - uBottom - uHeight / 2 &&
@@ -118,11 +119,18 @@ function handleCollisions() {
     const userCenterX = user.x + user.width / 2;
     const dx = ball.x - userCenterX;
     ball.angle = ((dx * 2) / width) * 45;
+    // hole
   } else if (ball.y - ball.radius >= gHeight) {
     lives--;
     console.log(lives);
     ball.attached = true;
   }
+  // else {
+  // bricks.forEach(row => row.forEach(brick => {
+  //   // bottom brick side
+  //   // if (ball.x - ball.radius >= brick.x && ball.y )
+  // }));
+  // }
 }
 
 function createGame() {
