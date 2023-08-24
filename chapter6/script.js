@@ -22,14 +22,14 @@ const settings = {
     color: "yellow",
     radius: 15,
     lowSpeed: 5,
-    normalSpeed: 10,
+    normalSpeed: 3,
     highSpeed: 15,
   },
   bricks: {
     columns: 8,
     rows: 3,
     height: 50,
-    gap: 10,
+    gap: 25,
   },
 };
 
@@ -89,6 +89,7 @@ function drawBall() {
 function drawBricks() {
   bricks.forEach((row) =>
     row.forEach((brick) => {
+      if (!brick) return;
       const { x, y, width, height, color } = brick;
       ctx.beginPath();
       ctx.fillStyle = color;
@@ -122,15 +123,34 @@ function handleCollisions() {
     // hole
   } else if (ball.y - ball.radius >= gHeight) {
     lives--;
-    console.log(lives);
     ball.attached = true;
+  } else {
+    bricks.forEach((row, i) =>
+      row.forEach((brick, j) => {
+        if (!brick) return;
+        let nearestBrickX;
+        let nearestBrickY;
+        if (ball.x < brick.x) nearestBrickX = brick.x;
+        else if (ball.x > brick.x + brick.width)
+          nearestBrickX = brick.x + brick.width;
+        else nearestBrickX = ball.x;
+        if (ball.y < brick.y) nearestBrickY = brick.y;
+        else if (ball.y > brick.y + brick.height)
+          nearestBrickY = brick.y + brick.height;
+        else nearestBrickY = ball.y;
+
+        ctx.beginPath();
+        ctx.fillStyle = "red";
+        ctx.arc(nearestBrickX, nearestBrickY, 5, 0, Math.PI);
+        ctx.fill();
+
+        const distance = Math.sqrt(
+          (ball.x - nearestBrickX) ** 2 + (ball.y - nearestBrickY) ** 2
+        );
+        if (distance <= ball.radius * 2) bricks[i][j] = null;
+      })
+    );
   }
-  // else {
-  // bricks.forEach(row => row.forEach(brick => {
-  //   // bottom brick side
-  //   // if (ball.x - ball.radius >= brick.x && ball.y )
-  // }));
-  // }
 }
 
 function createGame() {
