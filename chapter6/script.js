@@ -1,5 +1,3 @@
-// draw lives and score
-// add pause, game over and restart game
 // add bonuses
 // add inc and dec ball speed
 
@@ -40,20 +38,20 @@ canvas.style.backgroundColor = "black";
 
 document.body.appendChild(canvas);
 
-let user, keyboard, ball, lives, bricks, lowestBrickY, score;
+let user, keyboard, ball, lives, bricks, lowestBrickY, score, pause, gameOver;
 
 createGame();
 
-const draw = () => {
+function draw() {
   clean();
   drawUser();
   drawBall();
   drawBricks();
-  drawGameInfo();
   handleCollisions();
+  drawGameInfo();
+  if (gameOver || pause) return;
   requestAnimationFrame(draw);
-};
-draw();
+}
 
 function clean() {
   ctx.clearRect(0, 0, settings.game.width, settings.game.height);
@@ -109,6 +107,33 @@ function drawGameInfo() {
 
   ctx.textAlign = "right";
   ctx.fillText(`Lives: ${lives}`, settings.game.width - 20, 20);
+
+  // game over
+  if (gameOver) {
+    clean();
+    const { width, height } = settings.game;
+    ctx.beginPath();
+    ctx.textAlign = "center";
+    ctx.font = "bold 36px monospace";
+    ctx.textBaseline = "bottom";
+    ctx.fillText("Game over", width / 2, height / 2 - 36);
+    ctx.fillText(`Your score: ${score}`, width / 2, height / 2);
+    const btnParams = [width / 2 - 72, height / 2 + 18, 144, 54];
+    ctx.fillRect(...btnParams);
+    ctx.fillStyle = "black";
+    ctx.font = "bold 24px monospace";
+    ctx.fillText("Restart", width / 2, height / 2 + 54);
+    createRestartBtnEventHandlers(btnParams);
+  }
+
+  // pause
+  else if (pause) {
+    ctx.fillStyle = "red";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "bold 36px monospace";
+    ctx.fillText("Pause", settings.game.width / 2, settings.game.height / 2);
+  }
 }
 
 function handleCollisions() {
@@ -116,7 +141,7 @@ function handleCollisions() {
     game: { height: gHeight },
     user: { bottom: uBottom, height: uHeight },
   } = settings;
-  let skipping = false;
+  let skipFrames = 0;
 
   if (ball.attached) return;
 
@@ -148,13 +173,15 @@ function handleCollisions() {
   // hole
   if (ball.y - ball.radius >= gHeight) {
     lives--;
+    if (!lives) gameOver = true;
     ball.attached = true;
   }
 
   if (ball.y - ball.radius <= lowestBrickY)
     bricks.forEach((row, i) =>
       row.forEach((brick, j) => {
-        if (!brick || skipping) return;
+        if (!brick) return;
+        if (skipFrames) return skipFrames--;
         let nearestBrickX;
         let nearestBrickY;
         if (ball.x < brick.x) nearestBrickX = brick.x;
@@ -171,15 +198,17 @@ function handleCollisions() {
         );
         if (distance > ball.radius) return;
 
+        skipFrames = 10;
         score += brick.score;
         bricks[i][j] = null;
-        skipping = true;
 
         // corners hits
+
         if (
+          (nearestBrickX === brick.x ||
+            nearestBrickX === brick.x + brick.width) &&
           (nearestBrickY === brick.y ||
-            nearestBrickY === brick.y + brick.height) &&
-          (nearestBrickX === brick.x || nearestBrickX === brick.x + brick.width)
+            nearestBrickY === brick.y + brick.height)
         ) {
           // top right ball direction
           if (ball.angle >= 0 && ball.angle < 90) {
@@ -225,12 +254,13 @@ function handleCollisions() {
           nearestBrickY === brick.y + brick.height
         )
           ball.reverseY();
-        else ball.reverseX();
+        else if (ball.angle) ball.reverseX();
+        else ball.reverseY();
 
         const lowestRow = bricks
           .filter((row) => row.some((brick) => !!brick))
           .at(-1);
-        if (!lowestRow) lowestBrickY = 0;
+        if (!lowestRow) gameOver = true;
         else lowestBrickY = lowestRow.find((brick) => !!brick).y + brick.height;
       })
     );
@@ -304,6 +334,10 @@ function createGame() {
   );
   lowestBrickY = brickRows * (brickHeight + brickGap);
   score = 0;
+  pause = false;
+  gameOver = false;
+
+  draw();
 }
 
 document.addEventListener("keydown", (e) => {
@@ -312,6 +346,10 @@ document.addEventListener("keydown", (e) => {
   if (e.key === " " && ball.attached) {
     ball.attached = false;
     ball.speed = settings.ball.normalSpeed;
+  }
+  if (e.key === "Escape") {
+    pause = !pause;
+    !pause && draw();
   }
 });
 document.addEventListener("keyup", (e) => {
@@ -329,3 +367,30 @@ canvas.addEventListener("click", () => {
   ball.attached = false;
   ball.speed = settings.ball.normalSpeed;
 });
+
+const createRestartBtnEventHandlers = ([x, y, width, height]) => {
+  const mouseMoveHandler = (event) => {
+    const { offsetX, offsetY } = event;
+
+    const outsideBtn =
+      offsetX < x || offsetX > x + width || offsetY < y || offsetY > y + height;
+
+    document.body.style.cursor = outsideBtn ? "auto" : "pointer";
+  };
+  const clickHandler = (event) => {
+    const { offsetX, offsetY } = event;
+    if (
+      offsetX < x ||
+      offsetX > x + width ||
+      offsetY < y ||
+      offsetY > y + height
+    )
+      return;
+    document.removeEventListener("click", clickHandler);
+    document.removeEventListener("mousemove", mouseMoveHandler);
+    document.body.style.cursor = "auto";
+    createGame();
+  };
+  document.addEventListener("click", clickHandler);
+  document.addEventListener("mousemove", mouseMoveHandler);
+};
