@@ -26,7 +26,7 @@ const settings = {
   },
   bricks: {
     columns: 11,
-    rows: 6,
+    rows: 8,
     height: 50,
     gap: 20,
   },
@@ -41,7 +41,7 @@ canvas.style.backgroundColor = "black";
 
 document.body.appendChild(canvas);
 
-let user, keyboard, ball, lives, bricks, lowestBrickY;
+let user, keyboard, ball, lives, bricks, lowestBrickY, score;
 
 createGame();
 
@@ -108,12 +108,18 @@ function handleCollisions() {
   let skipping = false;
 
   if (ball.attached) return;
-  // side walls
-  if (ball.x - ball.radius <= 0 || ball.x + ball.radius >= settings.game.width)
-    ball.angle *= -1;
+
+  // left wall
+  if (ball.x - ball.radius <= 0 && ball.angle > 180)
+    ball.angle = 360 - ball.angle;
+
+  // right wall
+  if (ball.x + ball.radius >= settings.game.width && ball.angle < 180)
+    ball.angle = 360 - ball.angle;
 
   // top wall
-  if (ball.y - ball.radius <= 0) ball.angle = 180 - ball.angle;
+  if (ball.y - ball.radius <= 0 && (ball.angle < 90 || ball.angle > 270))
+    ball.angle = (540 - ball.angle) % 360;
 
   // user
   if (
@@ -125,7 +131,7 @@ function handleCollisions() {
     const width = user.width + ball.radius * 2;
     const userCenterX = user.x + user.width / 2;
     const dx = ball.x - userCenterX;
-    ball.angle = ((dx * 2) / width) * 45;
+    ball.angle = (360 + ((dx * 2) / width) * 45) % 360;
   }
 
   // hole
@@ -154,17 +160,67 @@ function handleCollisions() {
         );
         if (distance > ball.radius) return;
 
+        score++;
         bricks[i][j] = null;
         skipping = true;
-        ball.angle =
-          nearestBrickY === brick.y + brick.height || nearestBrickY === brick.y
-            ? 180 - ball.angle
-            : ball.angle * -1;
+
+        // corners hits
+        if (
+          (nearestBrickY === brick.y ||
+            nearestBrickY === brick.y + brick.height) &&
+          (nearestBrickX === brick.x || nearestBrickX === brick.x + brick.width)
+        ) {
+          // top right ball direction
+          if (ball.angle >= 0 && ball.angle < 90) {
+            if (
+              nearestBrickX === brick.x &&
+              nearestBrickY === brick.y + brick.height
+            )
+              ball.reverse();
+            else if (nearestBrickX === brick.x) ball.reverseX();
+            else ball.reverseY();
+          }
+          // bottom right ball direction
+          else if (ball.angle >= 90 && ball.angle < 180) {
+            if (nearestBrickX === brick.x && nearestBrickY === brick.y)
+              ball.reverse();
+            else if (nearestBrickX === brick.x) ball.reverseX();
+            else ball.reverseY();
+          }
+          // bottom left ball direction
+          else if (ball.angle >= 180 && ball.angle < 270) {
+            if (
+              nearestBrickX === brick.x + brick.width &&
+              nearestBrickY === brick.y
+            )
+              ball.reverse();
+            else if (nearestBrickX === brick.x + ball.width) ball.reverseX();
+            else ball.reverseY();
+          }
+          // top left ball direction
+          else if (ball.angle >= 270 && ball.angle < 360) {
+            if (
+              nearestBrickX === brick.x + brick.width &&
+              nearestBrickY === brick.y + brick.height
+            )
+              ball.reverse();
+            else if (nearestBrickX === brick.x + brick.width) ball.reverseX();
+            else ball.reverseY();
+          }
+        }
+        // side hits
+        else if (
+          nearestBrickY === brick.y ||
+          nearestBrickY === brick.y + brick.height
+        )
+          ball.reverseY();
+        else ball.reverseX();
+
         const lowestRow = bricks
           .filter((row) => row.some((brick) => !!brick))
           .at(-1);
         if (!lowestRow) lowestBrickY = 0;
-        lowestBrickY = lowestRow.find((brick) => !!brick).y + brick.height;
+        else lowestBrickY = lowestRow.find((brick) => !!brick).y + brick.height;
       })
     );
 }
@@ -214,6 +270,15 @@ function createGame() {
     normalSpeed: bNormalSpeed,
     highSpeed: bHighSpeed,
     radius: bRadius,
+    reverseX: function () {
+      this.angle = (360 - this.angle) % 360;
+    },
+    reverseY: function () {
+      this.angle = (540 - this.angle) % 360;
+    },
+    reverse: function () {
+      this.angle = (this.angle + 180) % 360;
+    },
   };
   const brickWidth = (width - (brickColumns + 1) * brickGap) / brickColumns;
   bricks = new Array(brickRows).fill(null).map((_, rowIndex) =>
@@ -226,6 +291,7 @@ function createGame() {
     }))
   );
   lowestBrickY = brickRows * (brickHeight + brickGap);
+  score = 0;
 }
 
 document.addEventListener("keydown", (e) => {
