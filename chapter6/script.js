@@ -1,4 +1,3 @@
-// add score logic (you can add random * 50 to every brick)
 // draw lives and score
 // add pause, game over and restart game
 // add bonuses
@@ -160,7 +159,7 @@ function handleCollisions() {
         );
         if (distance > ball.radius) return;
 
-        score++;
+        score += brick.score;
         bricks[i][j] = null;
         skipping = true;
 
@@ -288,6 +287,7 @@ function createGame() {
       width: brickWidth,
       height: brickHeight,
       color: "#" + Math.random().toString(16).substring(2, 8),
+      score: Math.ceil(Math.random() * 49),
     }))
   );
   lowestBrickY = brickRows * (brickHeight + brickGap);
