@@ -22,14 +22,14 @@ const settings = {
     color: "yellow",
     radius: 15,
     lowSpeed: 5,
-    normalSpeed: 3,
+    normalSpeed: 10,
     highSpeed: 15,
   },
   bricks: {
-    columns: 8,
-    rows: 3,
+    columns: 11,
+    rows: 6,
     height: 50,
-    gap: 25,
+    gap: 20,
   },
 };
 
@@ -93,7 +93,10 @@ function drawBricks() {
       const { x, y, width, height, color } = brick;
       ctx.beginPath();
       ctx.fillStyle = color;
-      ctx.fillRect(x, y, width, height);
+      ctx.strokeStyle = "gray";
+      ctx.rect(x, y, width, height);
+      ctx.fill();
+      ctx.stroke();
     })
   );
 }
@@ -103,6 +106,8 @@ function handleCollisions() {
     game: { height: gHeight },
     user: { bottom: uBottom, height: uHeight },
   } = settings;
+  let skipping = false;
+
   if (ball.attached) return;
   // left and right walls
   if (ball.x - ball.radius <= 0 || ball.x + ball.radius >= settings.game.width)
@@ -127,7 +132,7 @@ function handleCollisions() {
   } else {
     bricks.forEach((row, i) =>
       row.forEach((brick, j) => {
-        if (!brick) return;
+        if (!brick || skipping) return;
         let nearestBrickX;
         let nearestBrickY;
         if (ball.x < brick.x) nearestBrickX = brick.x;
@@ -139,15 +144,17 @@ function handleCollisions() {
           nearestBrickY = brick.y + brick.height;
         else nearestBrickY = ball.y;
 
-        ctx.beginPath();
-        ctx.fillStyle = "red";
-        ctx.arc(nearestBrickX, nearestBrickY, 5, 0, Math.PI);
-        ctx.fill();
-
         const distance = Math.sqrt(
           (ball.x - nearestBrickX) ** 2 + (ball.y - nearestBrickY) ** 2
         );
-        if (distance <= ball.radius * 2) bricks[i][j] = null;
+        if (distance > ball.radius) return;
+
+        bricks[i][j] = null;
+        skipping = true;
+        ball.angle =
+          nearestBrickY === brick.y + brick.height || nearestBrickY === brick.y
+            ? 180 - ball.angle
+            : ball.angle * -1;
       })
     );
   }
