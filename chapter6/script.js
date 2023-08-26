@@ -24,10 +24,10 @@ const settings = {
     highSpeed: 15,
   },
   bricks: {
-    columns: 11,
-    rows: 8,
+    columns: 10,
+    rows: 6,
     height: 50,
-    gap: 20,
+    gap: 30,
   },
 };
 
@@ -49,6 +49,7 @@ const draw = () => {
   drawUser();
   drawBall();
   drawBricks();
+  drawGameInfo();
   handleCollisions();
   requestAnimationFrame(draw);
 };
@@ -97,6 +98,17 @@ function drawBricks() {
       ctx.stroke();
     })
   );
+}
+
+function drawGameInfo() {
+  ctx.fillStyle = "white";
+  ctx.textBaseline = "top";
+  ctx.textAlign = "left";
+  ctx.font = "bold 24px monospace";
+  ctx.fillText(`Score: ${score}`, 20, 20);
+
+  ctx.textAlign = "right";
+  ctx.fillText(`Lives: ${lives}`, settings.game.width - 20, 20);
 }
 
 function handleCollisions() {
