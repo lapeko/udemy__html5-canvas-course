@@ -1,4 +1,3 @@
-// add brick hit logic (collision + removing + change directions of ball)
 // add score logic (you can add random * 50 to every brick)
 // draw lives and score
 // add pause, game over and restart game
@@ -42,7 +41,7 @@ canvas.style.backgroundColor = "black";
 
 document.body.appendChild(canvas);
 
-let user, keyboard, ball, lives, bricks;
+let user, keyboard, ball, lives, bricks, lowestBrickY;
 
 createGame();
 
@@ -109,13 +108,15 @@ function handleCollisions() {
   let skipping = false;
 
   if (ball.attached) return;
-  // left and right walls
+  // side walls
   if (ball.x - ball.radius <= 0 || ball.x + ball.radius >= settings.game.width)
     ball.angle *= -1;
+
   // top wall
-  else if (ball.y - ball.radius <= 0) ball.angle = 180 - ball.angle;
+  if (ball.y - ball.radius <= 0) ball.angle = 180 - ball.angle;
+
   // user
-  else if (
+  if (
     ball.y + ball.radius >= gHeight - uBottom - uHeight &&
     ball.y <= gHeight - uBottom - uHeight / 2 &&
     ball.x + ball.radius >= user.x &&
@@ -125,11 +126,15 @@ function handleCollisions() {
     const userCenterX = user.x + user.width / 2;
     const dx = ball.x - userCenterX;
     ball.angle = ((dx * 2) / width) * 45;
-    // hole
-  } else if (ball.y - ball.radius >= gHeight) {
+  }
+
+  // hole
+  if (ball.y - ball.radius >= gHeight) {
     lives--;
     ball.attached = true;
-  } else {
+  }
+
+  if (ball.y - ball.radius <= lowestBrickY)
     bricks.forEach((row, i) =>
       row.forEach((brick, j) => {
         if (!brick || skipping) return;
@@ -155,9 +160,13 @@ function handleCollisions() {
           nearestBrickY === brick.y + brick.height || nearestBrickY === brick.y
             ? 180 - ball.angle
             : ball.angle * -1;
+        const lowestRow = bricks
+          .filter((row) => row.some((brick) => !!brick))
+          .at(-1);
+        if (!lowestRow) lowestBrickY = 0;
+        lowestBrickY = lowestRow.find((brick) => !!brick).y + brick.height;
       })
     );
-  }
 }
 
 function createGame() {
@@ -216,15 +225,15 @@ function createGame() {
       color: "#" + Math.random().toString(16).substring(2, 8),
     }))
   );
+  lowestBrickY = brickRows * (brickHeight + brickGap);
 }
 
 document.addEventListener("keydown", (e) => {
-  if (e.key in keyboard) {
-    keyboard[e.key] = true;
-    if (e.key === " " && ball.attached) {
-      ball.attached = false;
-      ball.speed = settings.ball.normalSpeed;
-    }
+  if (e.key in keyboard === false) return;
+  keyboard[e.key] = true;
+  if (e.key === " " && ball.attached) {
+    ball.attached = false;
+    ball.speed = settings.ball.normalSpeed;
   }
 });
 document.addEventListener("keyup", (e) => {
