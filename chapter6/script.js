@@ -6,6 +6,7 @@ const settings = {
     width: 1024,
     height: 768,
     lives: 3,
+    percentOfBonus: 7,
   },
   user: {
     width: 200,
@@ -38,7 +39,16 @@ canvas.style.backgroundColor = "black";
 
 document.body.appendChild(canvas);
 
-let user, keyboard, ball, lives, bricks, lowestBrickY, score, pause, gameOver;
+let user,
+  keyboard,
+  ball,
+  lives,
+  bricks,
+  lowestBrickY,
+  score,
+  pause,
+  gameOver,
+  bonuses;
 
 createGame();
 
@@ -47,6 +57,7 @@ function draw() {
   drawUser();
   drawBall();
   drawBricks();
+  drawBonuses();
   handleCollisions();
   drawGameInfo();
   if (gameOver || pause) return;
@@ -98,42 +109,16 @@ function drawBricks() {
   );
 }
 
-function drawGameInfo() {
-  ctx.fillStyle = "white";
-  ctx.textBaseline = "top";
-  ctx.textAlign = "left";
-  ctx.font = "bold 24px monospace";
-  ctx.fillText(`Score: ${score}`, 20, 20);
-
-  ctx.textAlign = "right";
-  ctx.fillText(`Lives: ${lives}`, settings.game.width - 20, 20);
-
-  // game over
-  if (gameOver) {
-    clean();
-    const { width, height } = settings.game;
-    ctx.beginPath();
-    ctx.textAlign = "center";
-    ctx.font = "bold 36px monospace";
-    ctx.textBaseline = "bottom";
-    ctx.fillText("Game over", width / 2, height / 2 - 36);
-    ctx.fillText(`Your score: ${score}`, width / 2, height / 2);
-    const btnParams = [width / 2 - 72, height / 2 + 18, 144, 54];
-    ctx.fillRect(...btnParams);
-    ctx.fillStyle = "black";
-    ctx.font = "bold 24px monospace";
-    ctx.fillText("Restart", width / 2, height / 2 + 54);
-    createRestartBtnEventHandlers(btnParams);
-  }
-
-  // pause
-  else if (pause) {
-    ctx.fillStyle = "red";
-    ctx.textAlign = "center";
+function drawBonuses() {
+  Array.from(bonuses).forEach((bonus) => {
+    const { x, y, value } = bonus;
+    bonus.y += 5;
+    ctx.fillStyle = "white";
     ctx.textBaseline = "middle";
-    ctx.font = "bold 36px monospace";
-    ctx.fillText("Pause", settings.game.width / 2, settings.game.height / 2);
-  }
+    ctx.textAlign = "center";
+    ctx.font = "bold 24px monospace";
+    ctx.fillText(`${value}X`, x, y);
+  });
 }
 
 function handleCollisions() {
@@ -141,7 +126,23 @@ function handleCollisions() {
     game: { height: gHeight },
     user: { bottom: uBottom, height: uHeight },
   } = settings;
-  let skipFrames = 0;
+  let skipFrames = false;
+
+  // bonuses
+  Array.from(bonuses).forEach((bonus) => {
+    if (bonus.y - 24 > gHeight) {
+      console.log(); // TODO remove it and these brackets
+      bonuses.delete(bonus);
+    } else if (
+      bonus.y + 12 >= gHeight - uBottom - uHeight &&
+      bonus.y - 12 <= gHeight - uBottom &&
+      bonus.x + 12 >= user.x &&
+      bonus.x - 12 <= user.x + user.width
+    ) {
+      score *= bonus.value;
+      bonuses.delete(bonus);
+    }
+  });
 
   if (ball.attached) return;
 
@@ -177,11 +178,12 @@ function handleCollisions() {
     ball.attached = true;
   }
 
+  // bricks
   if (ball.y - ball.radius <= lowestBrickY)
     bricks.forEach((row, i) =>
       row.forEach((brick, j) => {
         if (!brick) return;
-        if (skipFrames) return skipFrames--;
+        if (skipFrames) return;
         let nearestBrickX;
         let nearestBrickY;
         if (ball.x < brick.x) nearestBrickX = brick.x;
@@ -198,12 +200,17 @@ function handleCollisions() {
         );
         if (distance > ball.radius) return;
 
-        skipFrames = 10;
+        skipFrames = true;
         score += brick.score;
+        if (brick.hasBonus)
+          bonuses.add({
+            x: brick.x + brick.width / 2,
+            y: brick.y + brick.height / 2,
+            value: Math.ceil(Math.random() * 4) + 1,
+          });
         bricks[i][j] = null;
 
         // corners hits
-
         if (
           (nearestBrickX === brick.x ||
             nearestBrickX === brick.x + brick.width) &&
@@ -254,7 +261,7 @@ function handleCollisions() {
           nearestBrickY === brick.y + brick.height
         )
           ball.reverseY();
-        else if (ball.angle) ball.reverseX();
+        else if (ball.angle % 180) ball.reverseX();
         else ball.reverseY();
 
         const lowestRow = bricks
@@ -264,6 +271,44 @@ function handleCollisions() {
         else lowestBrickY = lowestRow.find((brick) => !!brick).y + brick.height;
       })
     );
+}
+
+function drawGameInfo() {
+  ctx.fillStyle = "white";
+  ctx.textBaseline = "top";
+  ctx.textAlign = "left";
+  ctx.font = "bold 24px monospace";
+  ctx.fillText(`Score: ${score}`, 20, 20);
+
+  ctx.textAlign = "right";
+  ctx.fillText(`Lives: ${lives}`, settings.game.width - 20, 20);
+
+  // game over
+  if (gameOver) {
+    clean();
+    const { width, height } = settings.game;
+    ctx.beginPath();
+    ctx.textAlign = "center";
+    ctx.font = "bold 36px monospace";
+    ctx.textBaseline = "bottom";
+    ctx.fillText("Game over", width / 2, height / 2 - 36);
+    ctx.fillText(`Your score: ${score}`, width / 2, height / 2);
+    const btnParams = [width / 2 - 72, height / 2 + 18, 144, 54];
+    ctx.fillRect(...btnParams);
+    ctx.fillStyle = "black";
+    ctx.font = "bold 24px monospace";
+    ctx.fillText("Restart", width / 2, height / 2 + 54);
+    createRestartBtnEventHandlers(btnParams);
+  }
+
+  // pause
+  else if (pause) {
+    ctx.fillStyle = "red";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "bold 36px monospace";
+    ctx.fillText("Pause", settings.game.width / 2, settings.game.height / 2);
+  }
 }
 
 function createGame() {
@@ -330,12 +375,16 @@ function createGame() {
       height: brickHeight,
       color: "#" + Math.random().toString(16).substring(2, 8),
       score: Math.ceil(Math.random() * 49),
+      hasBonus: !Math.floor(
+        Math.random() * (100 / settings.game.percentOfBonus)
+      ),
     }))
   );
   lowestBrickY = brickRows * (brickHeight + brickGap);
   score = 0;
   pause = false;
   gameOver = false;
+  bonuses = new Set();
 
   draw();
 }
@@ -352,9 +401,11 @@ document.addEventListener("keydown", (e) => {
     !pause && draw();
   }
 });
+
 document.addEventListener("keyup", (e) => {
   if (e.key in keyboard) keyboard[e.key] = false;
 });
+
 canvas.addEventListener("mousemove", (e) => {
   const x = e.offsetX;
   if (x < user.width / 2) user.x = 0;
