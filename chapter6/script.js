@@ -1,4 +1,3 @@
-// add bonuses
 // add inc and dec ball speed
 
 const settings = {
@@ -169,6 +168,8 @@ function handleCollisions() {
     const userCenterX = user.x + user.width / 2;
     const dx = ball.x - userCenterX;
     ball.angle = (360 + ((dx * 2) / width) * 45) % 360;
+    if (keyboard.w) ball.speed = settings.ball.highSpeed;
+    else if (keyboard.s) ball.speed = settings.ball.lowSpeed;
   }
 
   // hole
@@ -389,36 +390,6 @@ function createGame() {
   draw();
 }
 
-document.addEventListener("keydown", (e) => {
-  if (e.key in keyboard === false) return;
-  keyboard[e.key] = true;
-  if (e.key === " " && ball.attached) {
-    ball.attached = false;
-    ball.speed = settings.ball.normalSpeed;
-  }
-  if (e.key === "Escape") {
-    pause = !pause;
-    !pause && draw();
-  }
-});
-
-document.addEventListener("keyup", (e) => {
-  if (e.key in keyboard) keyboard[e.key] = false;
-});
-
-canvas.addEventListener("mousemove", (e) => {
-  const x = e.offsetX;
-  if (x < user.width / 2) user.x = 0;
-  else if (x > settings.game.width - user.width / 2)
-    user.x = settings.game.width - user.width;
-  else user.x = x - user.width / 2;
-});
-canvas.addEventListener("click", () => {
-  if (!ball.attached) return;
-  ball.attached = false;
-  ball.speed = settings.ball.normalSpeed;
-});
-
 const createRestartBtnEventHandlers = ([x, y, width, height]) => {
   const mouseMoveHandler = (event) => {
     const { offsetX, offsetY } = event;
@@ -445,3 +416,34 @@ const createRestartBtnEventHandlers = ([x, y, width, height]) => {
   document.addEventListener("click", clickHandler);
   document.addEventListener("mousemove", mouseMoveHandler);
 };
+
+document.addEventListener("keydown", (e) => {
+  if (e.key in keyboard === false) return;
+  keyboard[e.key] = true;
+  if (e.key === " " && ball.attached) {
+    ball.attached = false;
+    ball.speed = settings.ball.normalSpeed;
+  }
+  if (e.key === "Escape") {
+    pause = !pause;
+    !pause && draw();
+  }
+});
+
+document.addEventListener("keyup", (e) => {
+  if (e.key in keyboard) keyboard[e.key] = false;
+});
+
+canvas.addEventListener("mousemove", (e) => {
+  const x = e.offsetX;
+  if (x < user.width / 2) user.x = 0;
+  else if (x > settings.game.width - user.width / 2)
+    user.x = settings.game.width - user.width;
+  else user.x = x - user.width / 2;
+});
+
+canvas.addEventListener("click", () => {
+  if (!ball.attached) return;
+  ball.attached = false;
+  ball.speed = settings.ball.normalSpeed;
+});
