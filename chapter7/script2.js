@@ -3,7 +3,7 @@ const ctx = canvas.getContext("2d");
 
 const WIDTH = 1080;
 const HEIGHT = 768;
-const G = 9.81;
+const G = 19.81;
 
 canvas.width = WIDTH;
 canvas.height = HEIGHT;
@@ -18,15 +18,14 @@ const ball = {
   lastTimer: 0,
   lastSpeed: 0,
   lastY: 0,
-  hit: false,
   nextAfterHit: false,
   elasticity: 0.9,
 };
 
-const draw = (timer) => {
+const draw = (timer = 0) => {
   clean();
-  drawBall();
   calculateBallPosition(timer);
+  drawBall();
   requestAnimationFrame(draw);
 };
 draw();
@@ -36,27 +35,28 @@ function clean() {
 }
 
 function calculateBallPosition(timer = 0) {
-  const seconds = timer / 50;
+  const seconds = timer / 100;
 
   const deltaTime = seconds - ball.lastTimer;
   ball.lastTimer = seconds;
 
-  ball.hit = ball.y > HEIGHT - ball.radius;
+  const nextY = ball.y + ball.speed * deltaTime;
+  const hit = nextY > HEIGHT - ball.radius;
 
-  if (!ball.hit) {
+  if (hit) {
+    ball.y = HEIGHT - ball.radius;
+    ball.speed = -1;
+    ball.nextAfterHit = true;
+  } else if (!ball.nextAfterHit) {
+    ball.speed += G * deltaTime;
+    ball.y += ball.speed * deltaTime;
     ball.lastSpeed = ball.speed;
     ball.lastY = ball.y;
   } else {
-    ball.y = HEIGHT - ball.radius;
-    ball.nextAfterHit = true;
-  }
-  if (!ball.hitFlag && ball.nextAfterHit) {
     ball.speed = -ball.lastSpeed * ball.elasticity - G * deltaTime;
     ball.y = ball.lastY;
     ball.nextAfterHit = false;
   }
-  ball.speed += G * deltaTime;
-  ball.y += ball.speed * deltaTime;
 }
 
 function drawBall() {
