@@ -1,4 +1,3 @@
-// add jumping ball (it would be more interesting to create it with gravity)
 const canvas = document.createElement("canvas");
 const ctx = canvas.getContext("2d");
 
@@ -15,11 +14,13 @@ const ball = {
   x: WIDTH / 2,
   y: 50,
   radius: 50,
-  speed: -5,
+  speed: 0,
   lastTimer: 0,
   lastSpeed: 0,
   lastY: 0,
-  hitFlag: false,
+  hit: false,
+  nextAfterHit: false,
+  elasticity: 0.9,
 };
 
 const draw = (timer) => {
@@ -35,39 +36,35 @@ function clean() {
 }
 
 function calculateBallPosition(timer = 0) {
-  const seconds = timer / 100;
+  const seconds = timer / 50;
 
   const deltaTime = seconds - ball.lastTimer;
   ball.lastTimer = seconds;
 
-  if (!ball.hitFlag) {
-    ball.lastY = ball.y;
+  ball.hit = ball.y > HEIGHT - ball.radius;
+
+  if (!ball.hit) {
     ball.lastSpeed = ball.speed;
-  }
-
-  if (ball.y >= HEIGHT - ball.radius) {
+    ball.lastY = ball.y;
+  } else {
     ball.y = HEIGHT - ball.radius;
-    ball.speed *= -1;
-    ball.hitFlag = true;
-  } else if (ball.hitFlag) {
-    ball.y = ball.lastY;
-    ball.speed = -ball.lastSpeed + G * deltaTime;
-    ball.hitFlag = false;
+    ball.nextAfterHit = true;
   }
-
-  ball.y += ball.speed * deltaTime;
+  if (!ball.hitFlag && ball.nextAfterHit) {
+    ball.speed = -ball.lastSpeed * ball.elasticity - G * deltaTime;
+    ball.y = ball.lastY;
+    ball.nextAfterHit = false;
+  }
   ball.speed += G * deltaTime;
+  ball.y += ball.speed * deltaTime;
 }
 
 function drawBall() {
   const { x, y, radius } = ball;
-
   const gradient = ctx.createRadialGradient(x, y, radius / 2, x, y, radius);
   gradient.addColorStop(0.8, "white");
   gradient.addColorStop(1, "blue");
-
   ctx.beginPath();
-
   ctx.fillStyle = gradient;
   ctx.arc(x, y, radius, 0, Math.PI * 2);
   ctx.fill();
