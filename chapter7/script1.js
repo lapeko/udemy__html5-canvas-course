@@ -9,12 +9,41 @@ canvas.width = WIDTH;
 canvas.height = HEIGHT;
 document.body.appendChild(canvas);
 
-// function draw() {}
-// draw();
+const rainbowGradient = ctx.createLinearGradient(0, 0, WIDTH, 0);
+rainbowGradient.addColorStop(0, "red");
+rainbowGradient.addColorStop(1 / 6, "orange");
+rainbowGradient.addColorStop(2 / 6, "yellow");
+rainbowGradient.addColorStop(3 / 6, "green");
+rainbowGradient.addColorStop(4 / 6, "blue");
+rainbowGradient.addColorStop(5 / 6, "indigo");
+rainbowGradient.addColorStop(1, "violet");
+
+class MatrixLinesManager {
+  endTimer;
+  matrixLines;
+
+  constructor() {
+    this.endTimer = Math.floor(Math.random() * 10_000);
+    this.matrixLines = new Set();
+  }
+
+  run(timer) {
+    if (this.endTimer < timer) this.createMatrixLine(timer);
+
+    Array.from(this.matrixLines).forEach((matrix) => {
+      if (matrix.endTimer < timer) this.matrixLines.delete(matrix);
+      else matrix.draw(timer);
+    });
+  }
+
+  createMatrixLine(timer) {
+    this.endTimer += Math.floor(Math.random() * 10_000);
+    this.matrixLines.add(new MatrixLine(timer));
+  }
+}
 
 class MatrixLine {
-  static fontSize = 24;
-  static color = "green";
+  static font = "34px Monospace";
 
   startTimer;
   endTimer;
@@ -33,14 +62,19 @@ class MatrixLine {
   }
 
   draw(timer) {
-    ctx.fillStyle = MatrixLine.color;
+    ctx.fillStyle = rainbowGradient;
     ctx.font = "54px Monospace";
     ctx.fillText(this.letters[0], this.x, this.y);
   }
 }
 
-const line = new MatrixLine();
-line.draw();
+const matrixManager = new MatrixLinesManager();
+
+function draw(timer) {
+  matrixManager.run(timer);
+  requestAnimationFrame(draw);
+}
+draw(0);
 
 function getRandomChar() {
   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
