@@ -19,15 +19,17 @@ rainbowGradient.addColorStop(5 / 6, "indigo");
 rainbowGradient.addColorStop(1, "violet");
 
 class MatrixLinesManager {
+  static timeout = 1000;
   endTimer;
   matrixLines;
 
   constructor() {
-    this.endTimer = Math.floor(Math.random() * 10_000);
+    this.endTimer = Math.floor(Math.random() * MatrixLinesManager.timeout);
     this.matrixLines = new Set();
   }
 
   run(timer) {
+    ctx.clearRect(0, 0, WIDTH, HEIGHT);
     if (this.endTimer < timer) this.createMatrixLine(timer);
 
     Array.from(this.matrixLines).forEach((matrix) => {
@@ -37,13 +39,13 @@ class MatrixLinesManager {
   }
 
   createMatrixLine(timer) {
-    this.endTimer += Math.floor(Math.random() * 10_000);
+    this.endTimer += Math.floor(Math.random() * MatrixLinesManager.timeout);
     this.matrixLines.add(new MatrixLine(timer));
   }
 }
 
 class MatrixLine {
-  static font = "34px Monospace";
+  static font = "32px Monospace";
 
   startTimer;
   endTimer;
@@ -51,20 +53,32 @@ class MatrixLine {
   y;
   speed;
   letters;
+  timeToCreateNextLetter;
 
-  constructor(startTimer) {
-    this.endTimer = startTimer + Math.floor(Math.random() * 10_000) + 5_000; // from 5 to 15 seconds
+  constructor(timer) {
+    this.startTimer = timer;
+    this.endTimer = timer + Math.floor(Math.random() * 20_000) + 20_000; // from 20 to 40 seconds
     this.x = Math.floor(Math.random() * WIDTH);
     this.y = Math.floor(Math.random() * HEIGHT);
     this.speed = Math.ceil(Math.random() * 9); // from1 to 10
-    const lettersSize = Math.floor(Math.random() * 10) + 10; // from 10 to 20
-    this.letters = new Array(lettersSize).fill(getRandomChar());
+    this.letters = new Array(getRandomChar());
+    this.timeToCreateNextLetter = Math.floor(Math.random() * 500) + 500; // from 500ms to 1s
   }
 
   draw(timer) {
+    if (
+      timer >
+      this.startTimer + this.timeToCreateNextLetter * this.letters.length
+    )
+      this.letters.push(getRandomChar());
     ctx.fillStyle = rainbowGradient;
-    ctx.font = "54px Monospace";
-    ctx.fillText(this.letters[0], this.x, this.y);
+    ctx.font = MatrixLine.font;
+    this.letters.forEach((letter, index) => {
+      const opacity = (20 - Math.min(this.letters.length - index - 1, 20)) / 20;
+      ctx.globalAlpha = opacity;
+      ctx.fillText(letter, this.x, this.y + 32 * index);
+      ctx.globalAlpha = 1;
+    });
   }
 }
 
